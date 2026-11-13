@@ -43,6 +43,32 @@ We've also started a **GitHub Dorks Database**, where you can browse and search 
 
 `echo "AKIA" | git-hound` or `git-hound --query "AKIA"`
 
+## Offline scanning (air-gapped)
+
+The `offline` subcommand scans an already checked-out directory entirely on
+the local machine. It never contacts GitHub and needs no API token or config
+file, which makes it suitable for isolated/air-gapped audit environments.
+
+`githound offline <directory> [--rules rules/] [--json] [--no-scoring] [--no-files] [--no-keywords] [--file-exts ext.txt] [--threads N]`
+
+- Rules are loaded from the same YAML (`.yml`/`.yaml`), TOML (`.toml`) and
+  plain-text (`.txt`) rule sets as the online pipeline; a directory is read in
+  sorted filename order. Rule loading is fail-closed: any unreadable file,
+  unsupported extension, rule without an `id`, or regex that does not compile
+  aborts the scan with a non-zero exit code before any file is scanned.
+- Detection reuses the existing matching semantics: rule patterns with
+  `smart_filtering` (entropy/common-word/sequence checks), base64 decoding and
+  re-scanning, score-based false-positive filtering, and interesting
+  file-extension hits.
+- Findings are deterministic and ordered by relative path, line number,
+  column and rule ID. The default text format is
+  `relative/path:line:column: [rule-id] line-text`; `--json` emits one JSON
+  object per finding (JSON Lines) including `file`, `line`, `column`,
+  `rule_id`, `match`, `line_text`, `attributes` and a `base64` flag.
+- Invalid arguments (missing/non-directory target, non-positive `--threads`,
+  missing `--rules`/`--file-exts` paths) exit non-zero. A valid directory with
+  zero findings still exits `0`.
+
 ## Setup
 
 1. Download latest version of GitHound from https://github.com/tillson/git-hound/releases (with wget [url] or from the web browser).
